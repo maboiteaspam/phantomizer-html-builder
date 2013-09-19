@@ -16,10 +16,10 @@
     },
     "dependencies": {
         "grunt": "0.4.x",
-        "phantomizer-grunt": "http://github.com/maboiteaspam/phantomizer-grunt.git",
-        "phantomizer-libutil": "http://github.com/maboiteaspam/phantomizer-libutil.git",
-        "phantomizer-strykejs": "http://github.com/maboiteaspam/phantomizer-strykejs.git",
-        "phantomizer-html-assets": "http://github.com/maboiteaspam/phantomizer-html-assets.git"
+        "phantomizer-grunt": "maboiteaspam/phantomizer-grunt",
+        "phantomizer-libutil": "maboiteaspam/phantomizer-libutil",
+        "phantomizer-strykejs": "maboiteaspam/phantomizer-strykejs",
+        "phantomizer-html-assets": "maboiteaspam/phantomizer-html-assets"
     },
     "devDependencies": {
     }
