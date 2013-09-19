@@ -1,0 +1,26 @@
+{
+    "name": "phantomizer-html-builder",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Build application using phantomizer",
+    "keywords": "",
+    "bugs": {
+        "url" : "http://github.com/maboiteaspam/phantomizer-html-builder/issues"
+        , "email" : "none@host.com"
+    },
+    "license" : "mit",
+    "directories.lib": "lib/",
+    "repository" :{
+        "type" : "git"
+        , "url" : "http://github.com/maboiteaspam/phantomizer-html-builder.git"
+    },
+    "dependencies": {
+        "grunt": "0.4.x",
+        "phantomizer-grunt": "http://github.com/maboiteaspam/phantomizer-grunt.git",
+        "phantomizer-libutil": "http://github.com/maboiteaspam/phantomizer-libutil.git",
+        "phantomizer-strykejs": "http://github.com/maboiteaspam/phantomizer-strykejs.git",
+        "phantomizer-html-assets": "http://github.com/maboiteaspam/phantomizer-html-assets.git"
+    },
+    "devDependencies": {
+    }
+}
