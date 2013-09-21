@@ -19,11 +19,11 @@ module.exports = function(grunt) {
                 options:{}
             }
 
-        options[target]["options"]["in_request"] = request
-        options[target]["options"]["out_file"] = out_path+request
-        options[target]["options"]["meta_file"] = request+".meta"
+        options[target]["options"]["in_request"] = request;
+        options[target]["options"]["out_file"] = out_path+request;
+        options[target]["options"]["meta_file"] = request+".meta";
 
-        grunt.config.set("phantomizer-html-builder", options)
+        grunt.config.set("phantomizer-html-builder", options);
         grunt.task.run("phantomizer-html-builder:" + target);
 
     });
@@ -54,8 +54,8 @@ module.exports = function(grunt) {
         var current_sub_task_name = ""
         var sub_tasks = []
 
-        var current_grunt_task = this.nameArgs
-        var current_target = this.target
+        var current_grunt_task = this.nameArgs;
+        var current_target = this.target;
 
         if( !meta_file ){
             grunt.log.error("missing option property meta_file")
@@ -117,7 +117,7 @@ module.exports = function(grunt) {
 
             // -
             current_sub_task_name = "phantomizer-finalizer"
-            sub_task_name = "jit"+sub_tasks.length;
+            sub_task_name = "jit-builder"+sub_tasks.length;
 
             opts = grunt.config(current_sub_task_name) || {}
             opts[sub_task_name] = {
