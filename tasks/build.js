@@ -81,9 +81,7 @@ module.exports = function(grunt) {
             var current_sub_task_name = "";
             var sub_tasks = [];
 
-            if( !meta_file ){
-                grunt.log.error("missing option property meta_file")
-            }else if( meta_manager.is_fresh(meta_file) == false ){
+            if( meta_manager.is_fresh(meta_file) == false ){
 
                 // -
                 var in_file = ""
