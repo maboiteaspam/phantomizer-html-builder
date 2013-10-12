@@ -152,6 +152,7 @@ module.exports = function(grunt) {
         var out_path = options.out_path;
         var meta_dir = options.meta_dir;
         var urls_file = options.urls_file;
+        var inject_extras = options.inject_extras;
 
         var build_assets = options.build_assets;
         var htmlcompressor = options.htmlcompressor;
@@ -183,7 +184,7 @@ module.exports = function(grunt) {
         urls_file = "tmp/urls.json";
         grunt.file.mkdir("tmp");
         grunt.file.write(urls_file, JSON.stringify(urls));
-        queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_path );
+        queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_path, inject_extras );
 
         for( var n in urls ){
             var in_request = urls[n].in_request;
@@ -201,7 +202,11 @@ module.exports = function(grunt) {
             queue_html_min_dir(  sub_tasks, current_target, meta_dir, out_path );
         }
 
-        function queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_dir ){
+        if( inject_extras == true ){
+            queue_html_inject_extras_dir(  sub_tasks, current_target, out_path );
+        }
+
+        function queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_dir, inject_extras ){
 
             var task_name = "phantomizer-strykejs-builder2";
             var opts = grunt.config(task_name) || {};
@@ -211,6 +216,7 @@ module.exports = function(grunt) {
             opts[sub_task_name].options.urls_file = urls_file;
             opts[sub_task_name].options.out_dir = out_dir;
             opts[sub_task_name].options.meta_dir = meta_dir;
+            opts[sub_task_name].options.inject_extras = inject_extras;
 
             grunt.config.set(task_name, opts);
             sub_tasks.push( task_name+":"+sub_task_name );
@@ -255,6 +261,18 @@ module.exports = function(grunt) {
         opts[sub_task_name].options.out = out_file;
         opts[sub_task_name].options.meta_file = meta_file;
         opts[sub_task_name].options.meta_dir = meta_dir;
+
+        grunt.config.set(task_name, opts);
+        sub_tasks.push( task_name+":"+sub_task_name );
+    }
+    function queue_html_inject_extras_dir( sub_tasks, current_target, in_dir ){
+
+        var task_name = "phantomizer-dir-inject-html-extras";
+        var opts = grunt.config(task_name) || {};
+        var sub_task_name = current_target+"-"+sub_tasks.length;
+
+        opts = clone_subtasks_options(opts, sub_task_name, current_target);
+        opts[sub_task_name].options.in_dir = in_dir+"/";
 
         grunt.config.set(task_name, opts);
         sub_tasks.push( task_name+":"+sub_task_name );
