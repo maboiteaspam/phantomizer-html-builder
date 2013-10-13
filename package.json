@@ -19,6 +19,7 @@
         "phantomizer-grunt": "maboiteaspam/phantomizer-grunt",
         "phantomizer-libutil": "maboiteaspam/phantomizer-libutil",
         "phantomizer-strykejs": "maboiteaspam/phantomizer-strykejs",
+        "phantomizer-manifest": "maboiteaspam/phantomizer-manifest",
         "phantomizer-html-assets": "maboiteaspam/phantomizer-html-assets"
     },
     "devDependencies": {}

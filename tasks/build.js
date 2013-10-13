@@ -2,6 +2,7 @@
 
 module.exports = function(grunt) {
     var _ = grunt.util._;
+    var path = require('path');
 
     grunt.registerTask("phantomizer-html-jitbuild", "Builds html inlined request", function ( target, request ) {
 
@@ -139,7 +140,6 @@ module.exports = function(grunt) {
 
     grunt.registerMultiTask("phantomizer-html-builder2", "Builds html request", function () {
 
-        var path = require('path');
 
         var ph_libutil = require("phantomizer-libutil");
         var meta_factory = ph_libutil.meta;
@@ -151,11 +151,13 @@ module.exports = function(grunt) {
         grunt.verbose.writeflags(options,"options");
         var out_path = options.out_path;
         var meta_dir = options.meta_dir;
+        var paths = options.paths;
         var urls_file = options.urls_file;
         var inject_extras = options.inject_extras;
 
         var build_assets = options.build_assets;
         var htmlcompressor = options.htmlcompressor;
+        var html_manifest = options.html_manifest;
 
         var meta_manager = new meta_factory( process.cwd(), meta_dir )
 
@@ -186,15 +188,25 @@ module.exports = function(grunt) {
         grunt.file.write(urls_file, JSON.stringify(urls));
         queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_path, inject_extras );
 
-        for( var n in urls ){
-            var in_request = urls[n].in_request;
+        if( build_assets ){
+            for( var n in urls ){
+                var in_request = urls[n].in_request;
 
-            in_request_tgt = in_request+"-"+current_target;
-            out_file = urls[n].out_file;
-
-            // -
-            if( build_assets ){
+                in_request_tgt = in_request+"-"+current_target;
+                out_file = urls[n].out_file;
                 queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, out_path, meta_dir, false,false );
+            }
+        }
+
+        if( html_manifest == true ){
+            for( var n in urls ){
+                var in_request = urls[n].in_request;
+
+                in_request_tgt = in_request+"-"+current_target;
+                out_file = urls[n].out_file;
+                meta_file = urls[n].meta_file;
+
+                queue_html_manifest(  sub_tasks, current_target, out_file, out_file, meta_file, in_request );
             }
         }
 
@@ -205,6 +217,15 @@ module.exports = function(grunt) {
         if( inject_extras == true ){
             queue_html_inject_extras_dir(  sub_tasks, current_target, out_path );
         }
+
+        if( build_assets ){
+            queue_gm_merge(sub_tasks, current_target, paths, out_path);
+        }
+        queue_img_opt_dir(sub_tasks, current_target, paths, out_path);
+        if( build_assets ){
+            queue_css_img_merge_dir(sub_tasks, current_target, meta_dir, out_path, out_path);
+        }
+
 
         function queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_dir, inject_extras ){
 
@@ -222,9 +243,29 @@ module.exports = function(grunt) {
             sub_tasks.push( task_name+":"+sub_task_name );
         }
 
+        function queue_html_manifest( sub_tasks, current_target, in_file, out_file, meta_file, in_request ){
+
+            var task_name = "phantomizer-manifest-html";
+
+            var opts = grunt.config(task_name) || {};
+            var sub_task_name = current_target+"-"+in_request;
+
+            opts = clone_subtasks_options(opts, sub_task_name, current_target);
+            opts[sub_task_name].options.in_file = in_file;
+            opts[sub_task_name].options.out_file = out_file;
+            opts[sub_task_name].options.meta_file = meta_file;
+            opts[sub_task_name].options.base_url = path.dirname(in_request);
+            opts[sub_task_name].options.manifest_file = out_file.replace(/[.](html|htm)$/,".appcache");
+            opts[sub_task_name].options.manifest_meta = meta_file.replace(/[.](html|htm)$/,".appcache");
+            opts[sub_task_name].options.manifest_url = in_request.replace(/[.](html|htm)$/,".appcache");
+
+
+            grunt.config.set(task_name, opts);
+            sub_tasks.push( task_name+":"+sub_task_name );
+        }
+
         // -
         grunt.task.run( sub_tasks );
-
         grunt.log.ok();
 
     });
@@ -290,6 +331,60 @@ module.exports = function(grunt) {
         grunt.config.set(task_name, opts);
         sub_tasks.push( task_name+":"+sub_task_name );
     }
+
+    function queue_img_opt_dir( sub_tasks, build_target, paths, out_path ){
+
+        var jit_target = ""+build_target;
+        var task_name = "phantomizer-dir-imgopt";
+        var task_options = grunt.config(task_name) || {};
+
+        task_options = clone_subtasks_options(task_options, jit_target, build_target);
+        if(!task_options[jit_target].options) task_options[jit_target].options = {};
+        task_options[jit_target].options.paths = paths;
+        task_options[jit_target].options.out_path = out_path;
+
+        sub_tasks.push( task_name+":"+jit_target );
+
+        grunt.config.set(task_name, task_options);
+    }
+    function queue_css_img_merge_dir( sub_tasks, build_target, meta_dir, in_dir, out_dir ){
+
+        var merge_options = grunt.config("phantomizer-gm-merge") || {};
+        var map = merge_options.options.in_files;
+
+        var jit_target = ""+build_target;
+        var task_name = "phantomizer-dir-css-imgmerge";
+        var task_options = grunt.config(task_name) || {};
+
+        task_options = clone_subtasks_options(task_options, jit_target, build_target);
+        task_options[jit_target].options.paths = in_dir;
+        task_options[jit_target].options.out_dir = out_dir;
+        task_options[jit_target].options.meta_dir = meta_dir;
+        task_options[jit_target].options.map = map;
+
+        sub_tasks.push( task_name+":"+jit_target );
+
+        grunt.config.set(task_name, task_options);
+    }
+    function queue_gm_merge( sub_tasks, build_target, paths, out_dir ){
+
+        var jit_target = ""+build_target;
+        var task_name = "phantomizer-gm-merge";
+        var task_options = grunt.config(task_name) || {};
+
+        task_options = clone_subtasks_options(task_options, jit_target, build_target);
+
+        if( !task_options[jit_target].options )
+            task_options[jit_target].options = {};
+        task_options[jit_target].options.paths = paths;
+        task_options[jit_target].options.out_dir = out_dir;
+
+        sub_tasks.push( task_name+":"+jit_target );
+
+        grunt.config.set(task_name, task_options);
+    }
+
+
     function clone_subtasks_options(task_options, task_name, current_target){
         var _ = grunt.util._;
         if( task_options[current_target] ) task_options[task_name] = _.clone(task_options[current_target], true);
