@@ -1,6 +1,6 @@
 {
     "name": "phantomizer-html-builder",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "private": true,
     "description": "Build application using phantomizer",
     "keywords": "",
