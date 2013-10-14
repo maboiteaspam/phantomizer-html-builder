@@ -16,11 +16,11 @@
     },
     "dependencies": {
         "grunt": "0.4.x",
-        "phantomizer-grunt": "maboiteaspam/phantomizer-grunt",
-        "phantomizer-libutil": "maboiteaspam/phantomizer-libutil",
-        "phantomizer-strykejs": "maboiteaspam/phantomizer-strykejs",
-        "phantomizer-manifest": "maboiteaspam/phantomizer-manifest",
-        "phantomizer-html-assets": "maboiteaspam/phantomizer-html-assets"
+        "phantomizer-grunt": "maboiteaspam/maboiteaspam/maboiteaspam/phantomizer-grunt#b9b08f3",
+        "phantomizer-libutil": "maboiteaspam/maboiteaspam/maboiteaspam/phantomizer-libutil#010b357",
+        "phantomizer-strykejs": "maboiteaspam/maboiteaspam/maboiteaspam/phantomizer-strykejs#bbd3c6d",
+        "phantomizer-manifest": "maboiteaspam/maboiteaspam/maboiteaspam/phantomizer-manifest#30d8d0a",
+        "phantomizer-html-assets": "maboiteaspam/maboiteaspam/maboiteaspam/phantomizer-html-assets#7307190"
     },
     "devDependencies": {}
 }
