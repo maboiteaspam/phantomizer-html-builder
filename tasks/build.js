@@ -198,6 +198,8 @@ module.exports = function(grunt) {
             }
         }
 
+        sub_tasks.push( "throttle:20" );
+
         if( html_manifest == true ){
             for( var n in urls ){
                 var in_request = urls[n].in_request;
@@ -209,6 +211,8 @@ module.exports = function(grunt) {
                 queue_html_manifest(  sub_tasks, current_target, out_file, out_file, meta_file, in_request );
             }
         }
+
+        sub_tasks.push( "throttle:20" );
 
         if( htmlcompressor == true ){
             queue_html_min_dir(  sub_tasks, current_target, meta_dir, out_path );
@@ -279,7 +283,7 @@ module.exports = function(grunt) {
 
         opts = clone_subtasks_options(opts, sub_task_name, current_target);
         opts[sub_task_name].options.in_file = in_file;
-        opts[sub_task_name].options.real_current_target = current_target;
+        opts[sub_task_name].options.as_of_target = current_target;
         opts[sub_task_name].options.out = out_file;
         opts[sub_task_name].options.meta_file = meta_file;
         opts[sub_task_name].options.out_path = out_path;
