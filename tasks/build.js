@@ -197,7 +197,8 @@ module.exports = function(grunt) {
                 queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, out_path, meta_dir, false,false );
             }
         }
-
+// helps to prevent odd error such :
+// Warning: Maximum call stack size exceeded Use --force to continue.
         sub_tasks.push( "throttle:20" );
 
         if( html_manifest == true ){
@@ -212,6 +213,8 @@ module.exports = function(grunt) {
             }
         }
 
+// helps to prevent odd error such :
+// Warning: Maximum call stack size exceeded Use --force to continue.
         sub_tasks.push( "throttle:20" );
 
         if( htmlcompressor == true ){
