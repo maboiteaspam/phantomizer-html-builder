@@ -36,7 +36,13 @@ module.exports = function(grunt) {
 
         var wd = process.cwd();
 
-        var options = this.options();
+        var options = this.options({
+            out_path:'',
+            meta_dir:'',
+            htmlcompressor:false,
+            build_assets:false,
+            in_request:''
+        });
 
         grunt.verbose.writeflags(options,"options");
         var out_path = options.out_path;
@@ -44,13 +50,10 @@ module.exports = function(grunt) {
 
         var build_assets = options.build_assets;
         var htmlcompressor = options.htmlcompressor;
-
-        var meta_manager = new meta_factory( wd, meta_dir )
-
-        var current_target = this.target;
-
         var in_request = options.in_request;
 
+        var meta_manager = new meta_factory( wd, meta_dir )
+        var current_target = this.target;
 
         var in_request_tgt = in_request+"-"+current_target;
         var meta_file = meta_dir+"/"+in_request_tgt;
@@ -62,10 +65,12 @@ module.exports = function(grunt) {
 
             // -
             queue_strykejs_builder( sub_tasks, current_target, in_request, in_request_tgt+".stryke", out_file+".stryke" );
+            grunt.log.ok("Stryke task pushed ");
 
             // -
             if( build_assets ){
                 queue_html_assets( sub_tasks, current_target, in_request, out_file+".stryke", in_request_tgt+".assets", out_file+".assets", out_path, meta_dir,true,true );
+                grunt.log.ok("assets build task pushed ");
             }
 
             // -
@@ -75,15 +80,17 @@ module.exports = function(grunt) {
                 }else{
                     queue_html_min(  sub_tasks, current_target, out_file+".min", meta_dir, in_request_tgt+".min", out_file+".stryke", in_request );
                 }
+                grunt.log.ok("HTMLcompressor task pushed ");
             }
 
             // -
             queue_finalizer_builder( sub_tasks, in_request_tgt, out_file, build_assets, htmlcompressor, meta_dir );
+            grunt.log.ok("Finalizer task pushed ");
 
             // -
             grunt.task.run( sub_tasks );
 
-            grunt.log.ok();
+            grunt.log.ok("Done ");
         }else{
             console.log("Build is fresh ! -> " + in_request)
         }
@@ -146,15 +153,25 @@ module.exports = function(grunt) {
 
         var sub_tasks = [];
 
-        var options = this.options();
-
+        var options = this.options({
+            out_path:'',
+            meta_dir:'',
+            paths:[],
+            urls_file:[],
+            html_manifest:false,
+            inject_extras:false,
+            htmlcompressor:false,
+            build_assets:false,
+            in_request:''
+        });
         grunt.verbose.writeflags(options,"options");
+
         var out_path = options.out_path;
         var meta_dir = options.meta_dir;
         var paths = options.paths;
         var urls_file = options.urls_file;
-        var inject_extras = options.inject_extras;
 
+        var inject_extras = options.inject_extras;
         var build_assets = options.build_assets;
         var htmlcompressor = options.htmlcompressor;
         var html_manifest = options.html_manifest;
@@ -167,11 +184,13 @@ module.exports = function(grunt) {
         grunt.log.ok("Reading urls from file "+urls_file);
         grunt.log.ok("URL Count "+raw_urls.length);
 
+        var in_request;
+        var in_request_tgt;
         var urls = [];
         for( var n in raw_urls ){
-            var in_request = raw_urls[n];
+            in_request = raw_urls[n];
 
-            var in_request_tgt = in_request+"-"+current_target;
+            in_request_tgt = in_request+"-"+current_target;
             var meta_file = in_request_tgt;
             var out_file = out_path+"/"+in_request;
 
@@ -190,7 +209,7 @@ module.exports = function(grunt) {
 
         if( build_assets ){
             for( var n in urls ){
-                var in_request = urls[n].in_request;
+                in_request = urls[n].in_request;
 
                 in_request_tgt = in_request+"-"+current_target;
                 out_file = urls[n].out_file;
@@ -203,7 +222,7 @@ module.exports = function(grunt) {
 
         if( html_manifest == true ){
             for( var n in urls ){
-                var in_request = urls[n].in_request;
+                in_request = urls[n].in_request;
 
                 in_request_tgt = in_request+"-"+current_target;
                 out_file = urls[n].out_file;
@@ -229,16 +248,16 @@ module.exports = function(grunt) {
             queue_gm_merge(sub_tasks, current_target, paths, out_path);
         }
         queue_img_opt_dir(sub_tasks, current_target, paths, out_path);
+
         if( build_assets ){
             queue_css_img_merge_dir(sub_tasks, current_target, meta_dir, out_path, out_path);
         }
 
 
-        function queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_dir, inject_extras ){
+        function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file, meta_dir, out_dir, inject_extras ){
 
             var task_name = "phantomizer-strykejs-builder2";
             var opts = grunt.config(task_name) || {};
-            var sub_task_name = current_target;
 
             opts = clone_subtasks_options(opts, sub_task_name, current_target);
             opts[sub_task_name].options.urls_file = urls_file;
@@ -282,7 +301,7 @@ module.exports = function(grunt) {
 
         var task_name = "phantomizer-html-assets";
         var opts = grunt.config(task_name) || {};
-        var sub_task_name = current_target+"-"+in_request;
+        var sub_task_name = in_request+"-"+current_target;
 
         opts = clone_subtasks_options(opts, sub_task_name, current_target);
         opts[sub_task_name].options.in_file = in_file;
