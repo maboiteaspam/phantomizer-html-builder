@@ -205,7 +205,7 @@ module.exports = function(grunt) {
         urls_file = "tmp/urls.json";
         grunt.file.mkdir("tmp");
         grunt.file.write(urls_file, JSON.stringify(urls));
-        queue_strykejs_builder( sub_tasks, current_target, urls_file, meta_dir, out_path, inject_extras );
+        queue_strykejs_builder( sub_tasks, current_target, urls_file,inject_extras );
 
         if( build_assets ){
             for( var n in urls ){
@@ -254,15 +254,13 @@ module.exports = function(grunt) {
         }
 
 
-        function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file, meta_dir, out_dir, inject_extras ){
+        function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file, inject_extras ){
 
             var task_name = "phantomizer-strykejs-builder2";
             var opts = grunt.config(task_name) || {};
 
             opts = clone_subtasks_options(opts, sub_task_name, current_target);
             opts[sub_task_name].options.urls_file = urls_file;
-            opts[sub_task_name].options.out_dir = out_dir;
-            opts[sub_task_name].options.meta_dir = meta_dir;
             opts[sub_task_name].options.inject_extras = inject_extras;
 
             grunt.config.set(task_name, opts);
