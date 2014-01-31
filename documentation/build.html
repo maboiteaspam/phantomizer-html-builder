@@ -194,7 +194,7 @@ module.exports = <span class="hljs-function"><span class="hljs-keyword">function
 
 
 
-    grunt.registerMultiTask(<span class="hljs-string">"phantomizer-html-builder2"</span>, <span class="hljs-string">"Builds html request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
+    grunt.registerMultiTask(<span class="hljs-string">"phantomizer-html-project-builder"</span>, <span class="hljs-string">"Builds html request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
 
         <span class="hljs-keyword">var</span> done = <span class="hljs-keyword">this</span>.async();
 
@@ -212,8 +212,7 @@ module.exports = <span class="hljs-function"><span class="hljs-keyword">function
             html_manifest:<span class="hljs-literal">false</span>,
             inject_extras:<span class="hljs-literal">false</span>,
             htmlcompressor:<span class="hljs-literal">false</span>,
-            build_assets:<span class="hljs-literal">false</span>,
-            in_request:<span class="hljs-string">''</span>
+            build_assets:<span class="hljs-literal">false</span>
         });
         grunt.verbose.writeflags(options,<span class="hljs-string">"options"</span>);
 
@@ -348,7 +347,7 @@ Warning: Maximum call stack size exceeded Use —force to continue.</p>
 
         <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_strykejs_builder</span><span class="hljs-params">( sub_tasks, sub_task_name, urls_file, inject_extras )</span>{</span>
 
-            <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-strykejs-builder2"</span>;
+            <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-strykejs-project-builder"</span>;
             <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
 
             opts = clone_subtasks_options(opts, sub_task_name, current_target);
