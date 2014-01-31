@@ -1,131 +1,64 @@
 
 module.exports = function(grunt) {
 
-    var d = __dirname+"/vendors/phantomizer-requirejs";
-
-    var in_dir = d+"/demo/in/";
-    var out_dir = d+"/demo/out/";
-    var meta_dir = d+"/demo/out/";
-
     grunt.initConfig({
-        pkg: grunt.file.readJSON('package.json')
-
-        ,"out_dir":out_dir
-        ,"meta_dir":meta_dir
-
-        ,'phantomizer-html-builder': {
-            options: {
-                "out_path": "<%= out_dir %>/"
-                ,"meta_path": "<%= meta_dir %>/"
-                ,"paths":[in_dir]
-                ,'phantomizer-html-assets': {
-                    options: {
-                        "requirejs_src":"/js/require-2.1.5-jquery-1.9.1.js",
-                        "requirejs_baseUrl": "/js/",
-                        "htmlcompressor": true,
-                        "phantomizer-htmlcompressor":{
-                            options: {
-                                "compress-js":true,
-                                "compress-css":true
-                            }
-                        },
-                        "phantomizer-uglifyjs":{
-                            banner: ''
-                            ,beautify: false
-                            ,report: false
-                        }
-                        ,"phantomizer-requirejs":{
-                            "options":{
-                                "baseUrl": in_dir+"/js"
-                                ,"paths": {
-                                    "almond": in_dir+"/js/almond-0.2.5"
-                                    ,"jquery": in_dir+"/js/jquery-1.10.2.min"
-                                }
-                                ,"optimize": "none"
-                                ,"wrap": true
-                                ,"name": "almond"
-                            }
-                        }
-                        ,"phantomizer-requirecss":{
-                            "optimizeCss": "standard"
-                        }
-                    }
-                }
-                ,'phantomizer-strykejs-builder': {
-                    options: {
-                        "port":8080,
-                        "ssl_port":8081
-                    }
+        pkg: grunt.file.readJSON('package.json'),
+        docco: {
+            debug: {
+                src: [
+                    'taks/build.js'
+                ],
+                options: {
+                    layout:'linear',
+                    output: 'documentation/'
                 }
             }
-            ,test: {
-                options:{
-                    "in_request":"/index.html"
-                    ,"out_file": "<%= out_dir %>/index.html"
-                    ,"meta_file": "<%= meta_dir %>/index.html"
-                }
-            }
-        }
-        //-
-        ,'phantomizer-html-jitbuild': {
+        },
+        'gh-pages': {
             options: {
-                "out_path": "<%= out_dir %>/"
-                ,"meta_path": "<%= meta_dir %>/"
-                ,"paths":[in_dir]
-                ,'phantomizer-html-assets': {
-                    options: {
-                        "requirejs_src":"/js/require-2.1.5-jquery-1.9.1.js"
-                        ,"requirejs_baseUrl": "/js/"
-                        ,"htmlcompressor": true
-                        ,"phantomizer-htmlcompressor":{
-                            options: {
-                                "compress-js":true
-                                ,"compress-css":true
-                            }
-                        }
-                        ,"phantomizer-uglifyjs":{
-                            banner: ''
-                            ,beautify: false
-                            ,report: false
-                        }
-                        ,"phantomizer-requirejs":{
-                            "options":{
-                                "baseUrl": in_dir+"/js"
-                                ,"paths": {
-                                    "almond": in_dir+"/js/almond-0.2.5"
-                                    ,"jquery": in_dir+"/js/jquery-1.10.2.min"
-                                }
-                                ,"optimize": "uglify"
-
-                                ,"wrap": true
-                                ,"name": "almond"
-                            }
-                        }
-                        ,"phantomizer-requirecss":{
-                            "optimizeCss": "standard"
-                        }
-                    }
-                }
-                ,'phantomizer-strykejs-builder': {
-                    options: {
-                        "port":8080,
-                        "ssl_port":8081
-                    }
+                base: '.',
+                add: true
+            },
+            src: ['documentation/**']
+        },
+        release: {
+            options: {
+                bump: true,
+                add: false,
+                commit: false,
+                npm: false,
+                npmtag: true,
+                tagName: '<%= version %>',
+                github: {
+                    repo: 'maboiteaspam/phantomizer-html-builder', //put your user/repo here
+                    usernameVar: 'GITHUB_USERNAME', //ENVIRONMENT VARIABLE that contains Github username
+                    passwordVar: 'GITHUB_PASSWORD' //ENVIRONMENT VARIABLE that contains Github password
                 }
             }
         }
     });
+    grunt.loadNpmTasks('grunt-docco');
+    grunt.loadNpmTasks('grunt-gh-pages');
+    grunt.loadNpmTasks('grunt-release');
 
-    grunt.loadNpmTasks('phantomizer-requirejs');
-    grunt.loadNpmTasks('phantomizer-htmlcompressor');
-    grunt.loadNpmTasks('phantomizer-strykejs');
-    grunt.loadNpmTasks('phantomizer-uglifyjs');
-    grunt.loadNpmTasks('phantomizer-html-assets');
-    grunt.loadNpmTasks('phantomizer-html-builder');
-    grunt.loadNpmTasks('phantomizer');
+    grunt.registerTask('cleanup-grunt-temp', [],function(){
+        var wrench = require('wrench');
+        wrench.rmdirSyncRecursive(__dirname + '/.grunt', !true);
+        wrench.rmdirSyncRecursive(__dirname + '/documentation', !true);
+    });
 
-    grunt.registerTask('default',
-        [
-            'phantomizer-html-jitbuild:test:/index.html'
-        ]);
+    // to generate and publish the docco style documentation
+    // execute this
+    // grunt
+    grunt.registerTask('default', ['docco','gh-pages', 'cleanup-grunt-temp']);
+
+    // to release the project in a new version
+    // use one of those commands
+    // grunt --no-write -v release # test only
+    // grunt release:patch
+    // grunt release:minor
+    // grunt release:major
+    // grunt release:prerelease
+
+
 };
