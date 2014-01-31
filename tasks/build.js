@@ -145,7 +145,7 @@ module.exports = function(grunt) {
 
 
 
-    grunt.registerMultiTask("phantomizer-html-builder2", "Builds html request", function () {
+    grunt.registerMultiTask("phantomizer-html-project-builder", "Builds html request", function () {
 
         var done = this.async();
 
@@ -163,8 +163,7 @@ module.exports = function(grunt) {
             html_manifest:false,
             inject_extras:false,
             htmlcompressor:false,
-            build_assets:false,
-            in_request:''
+            build_assets:false
         });
         grunt.verbose.writeflags(options,"options");
 
@@ -272,7 +271,7 @@ module.exports = function(grunt) {
 
         function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file, inject_extras ){
 
-            var task_name = "phantomizer-strykejs-builder2";
+            var task_name = "phantomizer-strykejs-project-builder";
             var opts = grunt.config(task_name) || {};
 
             opts = clone_subtasks_options(opts, sub_task_name, current_target);
