@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>build.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>build.js</h1>
+        
+
+        
+      </div>
+
+      
+        
+        
+        
+          <div class='highlight'><pre><span class="hljs-pi">'use strict'</span>;
+
+module.exports = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(grunt)</span> {</span>
+    <span class="hljs-keyword">var</span> _ = grunt.util._;
+    <span class="hljs-keyword">var</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>);
+
+    grunt.registerTask(<span class="hljs-string">"phantomizer-html-jitbuild"</span>, <span class="hljs-string">"Builds html inlined request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">( target, request )</span> {</span>
+
+        <span class="hljs-keyword">var</span> build_assets = <span class="hljs-literal">true</span>;
+
+        <span class="hljs-keyword">var</span> task_options = grunt.config(<span class="hljs-string">"phantomizer-html-jitbuild"</span>);
+
+        <span class="hljs-keyword">var</span> options = {}
+        grunt.util._.merge(options, task_options);
+
+        <span class="hljs-keyword">if</span>( !options[target] )
+            options[target] = {
+                options:{}
+            }
+
+        options[target][<span class="hljs-string">"options"</span>][<span class="hljs-string">"request"</span>] = request;
+        options[target][<span class="hljs-string">"options"</span>][<span class="hljs-string">"build_assets"</span>] = build_assets;
+
+        grunt.config.set(<span class="hljs-string">"phantomizer-html-builder"</span>, options);
+        grunt.task.run(<span class="hljs-string">"phantomizer-html-builder:"</span> + target);
+
+    });
+
+    grunt.registerMultiTask(<span class="hljs-string">"phantomizer-html-builder"</span>, <span class="hljs-string">"Builds html request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
+
+        <span class="hljs-keyword">var</span> _ = grunt.util._;
+        <span class="hljs-keyword">var</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>);
+
+        <span class="hljs-keyword">var</span> ph_libutil = <span class="hljs-built_in">require</span>(<span class="hljs-string">"phantomizer-libutil"</span>);
+        <span class="hljs-keyword">var</span> meta_factory = ph_libutil.meta;
+
+        <span class="hljs-keyword">var</span> wd = process.cwd();
+
+        <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>.options({
+            out_path:<span class="hljs-string">''</span>,
+            meta_dir:<span class="hljs-string">''</span>,
+            htmlcompressor:<span class="hljs-literal">false</span>,
+            build_assets:<span class="hljs-literal">false</span>,
+            in_request:<span class="hljs-string">''</span>
+        });
+
+        grunt.verbose.writeflags(options,<span class="hljs-string">"options"</span>);
+        <span class="hljs-keyword">var</span> out_path = options.out_path;
+        <span class="hljs-keyword">var</span> meta_dir = options.meta_dir;
+
+        <span class="hljs-keyword">var</span> build_assets = options.build_assets;
+        <span class="hljs-keyword">var</span> htmlcompressor = options.htmlcompressor;
+        <span class="hljs-keyword">var</span> in_request = options.in_request;
+
+        <span class="hljs-keyword">var</span> meta_manager = <span class="hljs-keyword">new</span> meta_factory( wd, meta_dir )
+        <span class="hljs-keyword">var</span> current_target = <span class="hljs-keyword">this</span>.target;
+
+        <span class="hljs-keyword">var</span> in_request_tgt = in_request+<span class="hljs-string">"-"</span>+current_target;
+        <span class="hljs-keyword">var</span> meta_file = meta_dir+<span class="hljs-string">"/"</span>+in_request_tgt;
+        <span class="hljs-keyword">var</span> out_file = out_path+<span class="hljs-string">"/"</span>+in_request_tgt;
+
+        <span class="hljs-keyword">var</span> sub_tasks = [];
+
+        <span class="hljs-keyword">if</span>( meta_manager.is_fresh(meta_file) == <span class="hljs-literal">false</span> ){</pre></div>
+        
+      
+        
+        <p>-</p>
+
+        
+          <div class='highlight'><pre>            queue_strykejs_builder( sub_tasks, current_target, in_request, in_request_tgt+<span class="hljs-string">".stryke"</span>, out_file+<span class="hljs-string">".stryke"</span> );
+            grunt.log.ok(<span class="hljs-string">"Stryke task pushed "</span>);</pre></div>
+        
+      
+        
+        <p>-</p>
+
+        
+          <div class='highlight'><pre>            <span class="hljs-keyword">if</span>( build_assets ){
+                queue_html_assets( sub_tasks, current_target, in_request, out_file+<span class="hljs-string">".stryke"</span>, in_request_tgt+<span class="hljs-string">".assets"</span>, out_file+<span class="hljs-string">".assets"</span>, out_path, meta_dir,<span class="hljs-literal">true</span>,<span class="hljs-literal">true</span> );
+                grunt.log.ok(<span class="hljs-string">"assets build task pushed "</span>);
+            }</pre></div>
+        
+      
+        
+        <p>-</p>
+
+        
+          <div class='highlight'><pre>            <span class="hljs-keyword">if</span>( htmlcompressor == <span class="hljs-literal">true</span> ){
+                <span class="hljs-keyword">if</span>( build_assets ){
+                    queue_html_min(  sub_tasks, current_target, out_file+<span class="hljs-string">".min"</span>, meta_dir, in_request_tgt+<span class="hljs-string">".min"</span>, out_file+<span class="hljs-string">".assets"</span>, in_request );
+                }<span class="hljs-keyword">else</span>{
+                    queue_html_min(  sub_tasks, current_target, out_file+<span class="hljs-string">".min"</span>, meta_dir, in_request_tgt+<span class="hljs-string">".min"</span>, out_file+<span class="hljs-string">".stryke"</span>, in_request );
+                }
+                grunt.log.ok(<span class="hljs-string">"HTMLcompressor task pushed "</span>);
+            }</pre></div>
+        
+      
+        
+        <p>-</p>
+
+        
+          <div class='highlight'><pre>            queue_finalizer_builder( sub_tasks, in_request_tgt, out_file, build_assets, htmlcompressor, meta_dir );
+            grunt.log.ok(<span class="hljs-string">"Finalizer task pushed "</span>);</pre></div>
+        
+      
+        
+        <p>-</p>
+
+        
+          <div class='highlight'><pre>            grunt.task.run( sub_tasks );
+
+            grunt.log.ok(<span class="hljs-string">"Done "</span>);
+        }<span class="hljs-keyword">else</span>{
+            console.log(<span class="hljs-string">"Build is fresh ! -&gt; "</span> + in_request)
+        }</pre></div>
+        
+      
+        
+        <p>— task queue-er</p>
+
+        
+          <div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_strykejs_builder</span><span class="hljs-params">( sub_tasks, current_target, in_request, meta_file, out_file )</span>{</span>
+            <span class="hljs-keyword">var</span> current_sub_task_name = <span class="hljs-string">"phantomizer-strykejs-builder"</span>;
+            <span class="hljs-keyword">var</span> sub_task_name = in_request;
+            <span class="hljs-keyword">var</span> opts = grunt.config(current_sub_task_name) || {};
+            <span class="hljs-keyword">if</span>( opts[current_target] ) opts[sub_task_name] = _.clone(opts[current_target], <span class="hljs-literal">true</span>)
+            <span class="hljs-keyword">if</span>( !opts[sub_task_name] ) opts[sub_task_name] = {};
+            <span class="hljs-keyword">if</span>( !opts[sub_task_name].options ) opts[sub_task_name].options = {};
+            opts[sub_task_name].options.in_request = in_request;
+            opts[sub_task_name].options.out = out_file;
+            opts[sub_task_name].options.meta = meta_file;
+
+            grunt.config.set(current_sub_task_name, opts);
+            sub_tasks.push( current_sub_task_name+<span class="hljs-string">":"</span>+sub_task_name+<span class="hljs-string">":"</span>+current_target );
+        }
+
+        <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_finalizer_builder</span><span class="hljs-params">( sub_tasks, in_request, out_file, build_assets, htmlcompressor, meta_dir )</span>{</span>
+
+            <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-finalizer"</span>;
+            <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+            <span class="hljs-keyword">var</span> sub_task_name = <span class="hljs-string">"some-task"</span>+<span class="hljs-string">"-"</span>+sub_tasks.length;
+
+            <span class="hljs-keyword">if</span>( !opts[sub_task_name] )
+                opts[sub_task_name] = {
+                    options:{
+                        copy:{}
+                        ,meta_dir:meta_dir
+                        ,meta_merge:{}
+                    }
+                };
+
+            opts[sub_task_name].options.copy[out_file] = out_file+<span class="hljs-string">".stryke"</span>;
+            opts[sub_task_name].options.meta_merge[in_request] = [in_request+<span class="hljs-string">".stryke"</span>];
+            <span class="hljs-keyword">if</span>(build_assets){
+                opts[sub_task_name].options.copy[out_file] = out_file+<span class="hljs-string">".assets"</span>;
+                opts[sub_task_name].options.meta_merge[in_request].push(in_request+<span class="hljs-string">".assets"</span>);
+            }
+            <span class="hljs-keyword">if</span>(htmlcompressor){
+                opts[sub_task_name].options.copy[out_file] = out_file+<span class="hljs-string">".min"</span>;
+                opts[sub_task_name].options.meta_merge[in_request].push(in_request+<span class="hljs-string">".min"</span>);
+            }
+
+            grunt.config.set(task_name, opts);
+            sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
+        }
+    });
+
+
+
+
+    grunt.registerMultiTask(<span class="hljs-string">"phantomizer-html-builder2"</span>, <span class="hljs-string">"Builds html request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
+
+        <span class="hljs-keyword">var</span> done = <span class="hljs-keyword">this</span>.async();
+
+
+        <span class="hljs-keyword">var</span> ph_libutil = <span class="hljs-built_in">require</span>(<span class="hljs-string">"phantomizer-libutil"</span>);
+        <span class="hljs-keyword">var</span> meta_factory = ph_libutil.meta;
+
+        <span class="hljs-keyword">var</span> sub_tasks = [];
+
+        <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>.options({
+            out_path:<span class="hljs-string">''</span>,
+            meta_dir:<span class="hljs-string">''</span>,
+            run_dir:<span class="hljs-string">''</span>,
+            paths:[],
+            html_manifest:<span class="hljs-literal">false</span>,
+            inject_extras:<span class="hljs-literal">false</span>,
+            htmlcompressor:<span class="hljs-literal">false</span>,
+            build_assets:<span class="hljs-literal">false</span>,
+            in_request:<span class="hljs-string">''</span>
+        });
+        grunt.verbose.writeflags(options,<span class="hljs-string">"options"</span>);
+
+        <span class="hljs-keyword">var</span> run_dir     = options.run_dir;
+        <span class="hljs-keyword">var</span> out_path = options.out_path;
+        <span class="hljs-keyword">var</span> meta_dir = options.meta_dir;
+        <span class="hljs-keyword">var</span> paths = options.paths;
+
+        <span class="hljs-keyword">var</span> inject_extras = options.inject_extras;
+        <span class="hljs-keyword">var</span> build_assets = options.build_assets;
+        <span class="hljs-keyword">var</span> htmlcompressor = options.htmlcompressor;
+        <span class="hljs-keyword">var</span> html_manifest = options.html_manifest;
+
+        <span class="hljs-keyword">var</span> current_target = <span class="hljs-keyword">this</span>.target;
+
+        <span class="hljs-keyword">var</span> meta_manager = <span class="hljs-keyword">new</span> meta_factory( process.cwd(), meta_dir );</pre></div>
+        
+      
+        
+        <p>initialize the router given the grunt config.routing key
+router provides the catalog of urls to build</p>
+
+        
+          <div class='highlight'><pre>        <span class="hljs-keyword">var</span> config = grunt.config.get();
+        <span class="hljs-keyword">var</span> router_factory = ph_libutil.router;
+        <span class="hljs-keyword">var</span> router = <span class="hljs-keyword">new</span> router_factory(config.routing);</pre></div>
+        
+      
+        
+        <p>load urls eventually from a remote service</p>
+
+        
+          <div class='highlight'><pre>        router.load(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span></pre></div>
+        
+      
+        
+        <p>fetch urls to build</p>
+
+        
+          <div class='highlight'><pre>            <span class="hljs-keyword">var</span> raw_urls = router.collect_urls();
+            grunt.log.ok(<span class="hljs-string">"URL Count "</span>+raw_urls.length);
+
+            <span class="hljs-keyword">var</span> in_request;
+            <span class="hljs-keyword">var</span> in_request_tgt;
+            <span class="hljs-keyword">var</span> urls = [];
+            <span class="hljs-keyword">for</span>( <span class="hljs-keyword">var</span> n <span class="hljs-keyword">in</span> raw_urls ){
+                in_request = raw_urls[n];
+
+                in_request_tgt = in_request+<span class="hljs-string">"-"</span>+current_target;
+                <span class="hljs-keyword">var</span> meta_file = in_request_tgt;
+                <span class="hljs-keyword">var</span> out_file = out_path+<span class="hljs-string">"/"</span>+in_request;
+
+                out_file = path.normalize(out_file);
+                meta_file = path.normalize(meta_file);
+
+                <span class="hljs-keyword">if</span>( meta_manager.is_fresh(meta_file) == <span class="hljs-literal">false</span> ){
+                    urls.push({in_request:in_request,out_file:out_file,meta_file:meta_file})
+                }
+            }
+
+            <span class="hljs-keyword">var</span> urls_file = run_dir+<span class="hljs-string">"/tmp/html-builder-urls.json"</span>;
+            grunt.file.mkdir( path.dirname(urls_file) );
+            grunt.file.write(urls_file, <span class="hljs-built_in">JSON</span>.stringify(urls));
+
+            queue_strykejs_builder( sub_tasks, current_target, urls_file, inject_extras );
+
+            <span class="hljs-keyword">if</span>( build_assets ){
+                <span class="hljs-keyword">for</span>( <span class="hljs-keyword">var</span> n <span class="hljs-keyword">in</span> urls ){
+                    in_request = urls[n].in_request;
+
+                    in_request_tgt = in_request+<span class="hljs-string">"-"</span>+current_target;
+                    out_file = urls[n].out_file;
+                    queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, out_path, meta_dir, <span class="hljs-literal">false</span>,<span class="hljs-literal">false</span> );
+                }
+            }</pre></div>
+        
+      
+        
+        <p>helps to prevent odd error such :
+Warning: Maximum call stack size exceeded Use —force to continue.</p>
+
+        
+          <div class='highlight'><pre>            sub_tasks.push( <span class="hljs-string">"throttle:20"</span> );
+
+            <span class="hljs-keyword">if</span>( html_manifest == <span class="hljs-literal">true</span> ){
+                <span class="hljs-keyword">for</span>( <span class="hljs-keyword">var</span> n <span class="hljs-keyword">in</span> urls ){
+                    in_request = urls[n].in_request;
+
+                    in_request_tgt = in_request+<span class="hljs-string">"-"</span>+current_target;
+                    out_file = urls[n].out_file;
+                    meta_file = urls[n].meta_file;
+
+                    queue_html_manifest(  sub_tasks, current_target, out_file, out_file, meta_file, in_request );
+                }
+            }</pre></div>
+        
+      
+        
+        <p>helps to prevent odd error such :
+Warning: Maximum call stack size exceeded Use —force to continue.</p>
+
+        
+          <div class='highlight'><pre>            sub_tasks.push( <span class="hljs-string">"throttle:20"</span> );
+
+            <span class="hljs-keyword">if</span>( htmlcompressor == <span class="hljs-literal">true</span> ){
+                queue_html_min_dir(  sub_tasks, current_target, meta_dir, out_path );
+            }
+
+            <span class="hljs-keyword">if</span>( inject_extras == <span class="hljs-literal">true</span> ){
+                queue_html_inject_extras_dir(  sub_tasks, current_target, out_path );
+            }
+
+            <span class="hljs-keyword">if</span>( build_assets ){
+                queue_gm_merge(sub_tasks, current_target, paths, out_path);
+            }
+            queue_img_opt_dir(sub_tasks, current_target, paths, out_path);
+
+            <span class="hljs-keyword">if</span>( build_assets ){
+                queue_css_img_merge_dir(sub_tasks, current_target, meta_dir, out_path, out_path);
+            }</pre></div>
+        
+      
+        
+        <p>-</p>
+
+        
+          <div class='highlight'><pre>            grunt.task.run( sub_tasks );
+            grunt.log.ok();
+
+            done();
+        });
+
+        <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_strykejs_builder</span><span class="hljs-params">( sub_tasks, sub_task_name, urls_file, inject_extras )</span>{</span>
+
+            <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-strykejs-builder2"</span>;
+            <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+
+            opts = clone_subtasks_options(opts, sub_task_name, current_target);
+            opts[sub_task_name].options.urls_file = urls_file;
+            opts[sub_task_name].options.inject_extras = inject_extras;
+
+            grunt.config.set(task_name, opts);
+            sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
+        }
+
+        <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_html_manifest</span><span class="hljs-params">( sub_tasks, current_target, in_file, out_file, meta_file, in_request )</span>{</span>
+
+            <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-manifest-html"</span>;
+
+            <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+            <span class="hljs-keyword">var</span> sub_task_name = current_target+<span class="hljs-string">"-"</span>+in_request;
+
+            opts = clone_subtasks_options(opts, sub_task_name, current_target);
+            opts[sub_task_name].options.in_file = in_file;
+            opts[sub_task_name].options.out_file = out_file;
+            opts[sub_task_name].options.meta_file = meta_file;
+            opts[sub_task_name].options.base_url = path.dirname(in_request);
+            opts[sub_task_name].options.manifest_file = out_file.replace(<span class="hljs-regexp">/[.](html|htm)$/</span>,<span class="hljs-string">".appcache"</span>);
+            opts[sub_task_name].options.manifest_meta = meta_file.replace(<span class="hljs-regexp">/[.](html|htm)$/</span>,<span class="hljs-string">".appcache"</span>);
+            opts[sub_task_name].options.manifest_url = in_request.replace(<span class="hljs-regexp">/[.](html|htm)$/</span>,<span class="hljs-string">".appcache"</span>);
+
+
+            grunt.config.set(task_name, opts);
+            sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
+        }
+
+    });
+
+
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_html_assets</span><span class="hljs-params">( sub_tasks, current_target, in_request, in_file, meta_file, out_file, out_path, meta_dir, imgcompressor, image_merge )</span>{</span>
+
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-html-assets"</span>;
+        <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+        <span class="hljs-keyword">var</span> sub_task_name = in_request+<span class="hljs-string">"-"</span>+current_target;
+
+        opts = clone_subtasks_options(opts, sub_task_name, current_target);
+        opts[sub_task_name].options.in_file = in_file;
+        opts[sub_task_name].options.as_of_target = current_target;
+        opts[sub_task_name].options.out = out_file;
+        opts[sub_task_name].options.meta_file = meta_file;
+        opts[sub_task_name].options.out_path = out_path;
+        opts[sub_task_name].options.meta_dir = meta_dir;
+        opts[sub_task_name].options.in_request = in_request;
+        opts[sub_task_name].options.imgcompressor = imgcompressor;
+        opts[sub_task_name].options.image_merge = image_merge;
+
+        grunt.config.set(task_name, opts)
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name )
+    }
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_html_min</span><span class="hljs-params">( sub_tasks, current_target, out_file, meta_dir, meta_file, in_file, in_request )</span>{</span>
+
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-htmlcompressor"</span>;
+        <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+        <span class="hljs-keyword">var</span> sub_task_name = current_target+<span class="hljs-string">"-"</span>+in_request;
+
+        opts = clone_subtasks_options(opts, sub_task_name, current_target);
+        opts[sub_task_name].options.in_file = in_file;
+        opts[sub_task_name].options.out = out_file;
+        opts[sub_task_name].options.meta_file = meta_file;
+        opts[sub_task_name].options.meta_dir = meta_dir;
+
+        grunt.config.set(task_name, opts);
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
+    }
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_html_inject_extras_dir</span><span class="hljs-params">( sub_tasks, current_target, in_dir )</span>{</span>
+
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-dir-inject-html-extras"</span>;
+        <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+        <span class="hljs-keyword">var</span> sub_task_name = current_target+<span class="hljs-string">"-"</span>+sub_tasks.length;
+
+        opts = clone_subtasks_options(opts, sub_task_name, current_target);
+        opts[sub_task_name].options.in_dir = in_dir+<span class="hljs-string">"/"</span>;
+
+        grunt.config.set(task_name, opts);
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
+    }
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_html_min_dir</span><span class="hljs-params">( sub_tasks, current_target, meta_dir, in_dir )</span>{</span>
+
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-dir-htmlcompressor"</span>;
+        <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
+        <span class="hljs-keyword">var</span> sub_task_name = current_target+<span class="hljs-string">"-"</span>+sub_tasks.length;
+
+        opts = clone_subtasks_options(opts, sub_task_name, current_target);
+        opts[sub_task_name].options.in_dir = in_dir+<span class="hljs-string">"/"</span>;
+        opts[sub_task_name].options.meta_dir = meta_dir;
+
+        grunt.config.set(task_name, opts);
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_img_opt_dir</span><span class="hljs-params">( sub_tasks, build_target, paths, out_path )</span>{</span>
+
+        <span class="hljs-keyword">var</span> jit_target = <span class="hljs-string">""</span>+build_target;
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-dir-imgopt"</span>;
+        <span class="hljs-keyword">var</span> task_options = grunt.config(task_name) || {};
+
+        task_options = clone_subtasks_options(task_options, jit_target, build_target);
+        <span class="hljs-keyword">if</span>(!task_options[jit_target].options) task_options[jit_target].options = {};
+        task_options[jit_target].options.paths = paths;
+        task_options[jit_target].options.out_path = out_path;
+
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+jit_target );
+
+        grunt.config.set(task_name, task_options);
+    }
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_css_img_merge_dir</span><span class="hljs-params">( sub_tasks, build_target, meta_dir, in_dir, out_dir )</span>{</span>
+
+        <span class="hljs-keyword">var</span> merge_options = grunt.config(<span class="hljs-string">"phantomizer-gm-merge"</span>) || {};
+        <span class="hljs-keyword">var</span> map = merge_options.options.in_files;
+
+        <span class="hljs-keyword">var</span> jit_target = <span class="hljs-string">""</span>+build_target;
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-dir-css-imgmerge"</span>;
+        <span class="hljs-keyword">var</span> task_options = grunt.config(task_name) || {};
+
+        task_options = clone_subtasks_options(task_options, jit_target, build_target);
+        task_options[jit_target].options.paths = in_dir;
+        task_options[jit_target].options.out_dir = out_dir;
+        task_options[jit_target].options.meta_dir = meta_dir;
+        task_options[jit_target].options.map = map;
+
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+jit_target );
+
+        grunt.config.set(task_name, task_options);
+    }
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_gm_merge</span><span class="hljs-params">( sub_tasks, build_target, paths, out_dir )</span>{</span>
+
+        <span class="hljs-keyword">var</span> jit_target = <span class="hljs-string">""</span>+build_target;
+        <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-gm-merge"</span>;
+        <span class="hljs-keyword">var</span> task_options = grunt.config(task_name) || {};
+
+        task_options = clone_subtasks_options(task_options, jit_target, build_target);
+
+        <span class="hljs-keyword">if</span>( !task_options[jit_target].options )
+            task_options[jit_target].options = {};
+        task_options[jit_target].options.paths = paths;
+        task_options[jit_target].options.out_dir = out_dir;
+
+        sub_tasks.push( task_name+<span class="hljs-string">":"</span>+jit_target );
+
+        grunt.config.set(task_name, task_options);
+    }
+
+
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">clone_subtasks_options</span><span class="hljs-params">(task_options, task_name, current_target)</span>{</span>
+        <span class="hljs-keyword">var</span> _ = grunt.util._;
+        <span class="hljs-keyword">if</span>( task_options[current_target] ) task_options[task_name] = _.clone(task_options[current_target], <span class="hljs-literal">true</span>);
+        <span class="hljs-keyword">if</span>( !task_options[task_name] ) task_options[task_name] = {};
+        <span class="hljs-keyword">if</span>( !task_options[task_name].options ) task_options[task_name].options = {};
+        <span class="hljs-keyword">return</span> task_options;
+    }
+};</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
