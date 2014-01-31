@@ -147,6 +147,8 @@ module.exports = function(grunt) {
 
     grunt.registerMultiTask("phantomizer-html-builder2", "Builds html request", function () {
 
+        var done = this.async();
+
 
         var ph_libutil = require("phantomizer-libutil");
         var meta_factory = ph_libutil.meta;
@@ -156,8 +158,8 @@ module.exports = function(grunt) {
         var options = this.options({
             out_path:'',
             meta_dir:'',
+            run_dir:'',
             paths:[],
-            urls_file:[],
             html_manifest:false,
             inject_extras:false,
             htmlcompressor:false,
@@ -166,93 +168,107 @@ module.exports = function(grunt) {
         });
         grunt.verbose.writeflags(options,"options");
 
+        var run_dir     = options.run_dir;
         var out_path = options.out_path;
         var meta_dir = options.meta_dir;
         var paths = options.paths;
-        var urls_file = options.urls_file;
 
         var inject_extras = options.inject_extras;
         var build_assets = options.build_assets;
         var htmlcompressor = options.htmlcompressor;
         var html_manifest = options.html_manifest;
 
-        var meta_manager = new meta_factory( process.cwd(), meta_dir )
-
         var current_target = this.target;
 
-        var raw_urls = grunt.file.readJSON(urls_file);
-        grunt.log.ok("Reading urls from file "+urls_file);
-        grunt.log.ok("URL Count "+raw_urls.length);
+        var meta_manager = new meta_factory( process.cwd(), meta_dir );
 
-        var in_request;
-        var in_request_tgt;
-        var urls = [];
-        for( var n in raw_urls ){
-            in_request = raw_urls[n];
+        // initialize the router given the grunt config.routing key
+        // router provides the catalog of urls to build
+        var config = grunt.config.get();
+        var router_factory = ph_libutil.router;
+        var router = new router_factory(config.routing);
+        // load urls eventually from a remote service
+        router.load(function(){
 
-            in_request_tgt = in_request+"-"+current_target;
-            var meta_file = in_request_tgt;
-            var out_file = out_path+"/"+in_request;
+            // fetch urls to build
+            var raw_urls = router.collect_urls();
+            grunt.log.ok("URL Count "+raw_urls.length);
 
-            out_file = path.normalize(out_file);
-            meta_file = path.normalize(meta_file);
-
-            if( meta_manager.is_fresh(meta_file) == false ){
-                urls.push({in_request:in_request,out_file:out_file,meta_file:meta_file})
-            }
-        }
-
-        urls_file = "tmp/urls.json";
-        grunt.file.mkdir("tmp");
-        grunt.file.write(urls_file, JSON.stringify(urls));
-        queue_strykejs_builder( sub_tasks, current_target, urls_file,inject_extras );
-
-        if( build_assets ){
-            for( var n in urls ){
-                in_request = urls[n].in_request;
+            var in_request;
+            var in_request_tgt;
+            var urls = [];
+            for( var n in raw_urls ){
+                in_request = raw_urls[n];
 
                 in_request_tgt = in_request+"-"+current_target;
-                out_file = urls[n].out_file;
-                queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, out_path, meta_dir, false,false );
+                var meta_file = in_request_tgt;
+                var out_file = out_path+"/"+in_request;
+
+                out_file = path.normalize(out_file);
+                meta_file = path.normalize(meta_file);
+
+                if( meta_manager.is_fresh(meta_file) == false ){
+                    urls.push({in_request:in_request,out_file:out_file,meta_file:meta_file})
+                }
             }
-        }
-// helps to prevent odd error such :
-// Warning: Maximum call stack size exceeded Use --force to continue.
-        sub_tasks.push( "throttle:20" );
 
-        if( html_manifest == true ){
-            for( var n in urls ){
-                in_request = urls[n].in_request;
+            var urls_file = run_dir+"/tmp/html-builder-urls.json";
+            grunt.file.mkdir( path.dirname(urls_file) );
+            grunt.file.write(urls_file, JSON.stringify(urls));
 
-                in_request_tgt = in_request+"-"+current_target;
-                out_file = urls[n].out_file;
-                meta_file = urls[n].meta_file;
+            queue_strykejs_builder( sub_tasks, current_target, urls_file, inject_extras );
 
-                queue_html_manifest(  sub_tasks, current_target, out_file, out_file, meta_file, in_request );
+            if( build_assets ){
+                for( var n in urls ){
+                    in_request = urls[n].in_request;
+
+                    in_request_tgt = in_request+"-"+current_target;
+                    out_file = urls[n].out_file;
+                    queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, out_path, meta_dir, false,false );
+                }
             }
-        }
+            // helps to prevent odd error such :
+            // Warning: Maximum call stack size exceeded Use --force to continue.
+            sub_tasks.push( "throttle:20" );
 
-// helps to prevent odd error such :
-// Warning: Maximum call stack size exceeded Use --force to continue.
-        sub_tasks.push( "throttle:20" );
+            if( html_manifest == true ){
+                for( var n in urls ){
+                    in_request = urls[n].in_request;
 
-        if( htmlcompressor == true ){
-            queue_html_min_dir(  sub_tasks, current_target, meta_dir, out_path );
-        }
+                    in_request_tgt = in_request+"-"+current_target;
+                    out_file = urls[n].out_file;
+                    meta_file = urls[n].meta_file;
 
-        if( inject_extras == true ){
-            queue_html_inject_extras_dir(  sub_tasks, current_target, out_path );
-        }
+                    queue_html_manifest(  sub_tasks, current_target, out_file, out_file, meta_file, in_request );
+                }
+            }
 
-        if( build_assets ){
-            queue_gm_merge(sub_tasks, current_target, paths, out_path);
-        }
-        queue_img_opt_dir(sub_tasks, current_target, paths, out_path);
+            // helps to prevent odd error such :
+            // Warning: Maximum call stack size exceeded Use --force to continue.
+            sub_tasks.push( "throttle:20" );
 
-        if( build_assets ){
-            queue_css_img_merge_dir(sub_tasks, current_target, meta_dir, out_path, out_path);
-        }
+            if( htmlcompressor == true ){
+                queue_html_min_dir(  sub_tasks, current_target, meta_dir, out_path );
+            }
 
+            if( inject_extras == true ){
+                queue_html_inject_extras_dir(  sub_tasks, current_target, out_path );
+            }
+
+            if( build_assets ){
+                queue_gm_merge(sub_tasks, current_target, paths, out_path);
+            }
+            queue_img_opt_dir(sub_tasks, current_target, paths, out_path);
+
+            if( build_assets ){
+                queue_css_img_merge_dir(sub_tasks, current_target, meta_dir, out_path, out_path);
+            }
+            // -
+            grunt.task.run( sub_tasks );
+            grunt.log.ok();
+
+            done();
+        });
 
         function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file, inject_extras ){
 
@@ -287,10 +303,6 @@ module.exports = function(grunt) {
             grunt.config.set(task_name, opts);
             sub_tasks.push( task_name+":"+sub_task_name );
         }
-
-        // -
-        grunt.task.run( sub_tasks );
-        grunt.log.ok();
 
     });
 
