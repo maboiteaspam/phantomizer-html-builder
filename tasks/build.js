@@ -144,42 +144,39 @@ module.exports = function(grunt) {
 
 
 
+    // Builds a phantomizer project
+    // ----------
+    grunt.registerMultiTask("phantomizer-html-project-builder",
+        "Builds an entire project with best performance", function () {
 
-    grunt.registerMultiTask("phantomizer-html-project-builder", "Builds html request", function () {
-
+        // this task is async
         var done = this.async();
-
 
         var ph_libutil = require("phantomizer-libutil");
         var meta_factory = ph_libutil.meta;
 
         var sub_tasks = [];
 
+        // init default options
         var options = this.options({
+            // the path were all build assets results
             out_path:'',
+            // the path holding all build assets meta
             meta_dir:'',
+            // the path to record temporarly url collection
             run_dir:'',
+            // the path used for webserver
             paths:[],
-            html_manifest:false,
+            // enable extras support scripts injection (dashbaord loader, test loader)
             inject_extras:false,
-            htmlcompressor:false,
+            // enable js,css,img build
             build_assets:false
         });
         grunt.verbose.writeflags(options,"options");
 
-        var run_dir     = options.run_dir;
-        var out_path = options.out_path;
-        var meta_dir = options.meta_dir;
-        var paths = options.paths;
-
-        var inject_extras = options.inject_extras;
-        var build_assets = options.build_assets;
-        var htmlcompressor = options.htmlcompressor;
-        var html_manifest = options.html_manifest;
-
         var current_target = this.target;
 
-        var meta_manager = new meta_factory( process.cwd(), meta_dir );
+        var meta_manager = new meta_factory( process.cwd(), options.meta_dir );
 
         // initialize the router given the grunt config.routing key
         // router provides the catalog of urls to build
@@ -201,7 +198,7 @@ module.exports = function(grunt) {
 
                 in_request_tgt = in_request+"-"+current_target;
                 var meta_file = in_request_tgt;
-                var out_file = out_path+"/"+in_request;
+                var out_file = options.out_path+"/"+in_request;
 
                 out_file = path.normalize(out_file);
                 meta_file = path.normalize(meta_file);
@@ -211,56 +208,36 @@ module.exports = function(grunt) {
                 }
             }
 
-            var urls_file = run_dir+"/tmp/html-builder-urls.json";
+            var urls_file = options.run_dir+"/tmp/html-builder-urls.json";
             grunt.file.mkdir( path.dirname(urls_file) );
             grunt.file.write(urls_file, JSON.stringify(urls));
 
-            queue_strykejs_builder( sub_tasks, current_target, urls_file, inject_extras );
+            queue_strykejs_builder( sub_tasks, current_target, urls_file, options.inject_extras );
 
-            if( build_assets ){
+            if( options.build_assets ){
                 for( var n in urls ){
                     in_request = urls[n].in_request;
 
                     in_request_tgt = in_request+"-"+current_target;
                     out_file = urls[n].out_file;
-                    queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, out_path, meta_dir, false,false );
+                    queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, options.out_path, options.meta_dir, false,false );
                 }
             }
             // helps to prevent odd error such :
             // Warning: Maximum call stack size exceeded Use --force to continue.
             sub_tasks.push( "throttle:20" );
 
-            if( html_manifest == true ){
-                for( var n in urls ){
-                    in_request = urls[n].in_request;
-
-                    in_request_tgt = in_request+"-"+current_target;
-                    out_file = urls[n].out_file;
-                    meta_file = urls[n].meta_file;
-
-                    queue_html_manifest(  sub_tasks, current_target, out_file, out_file, meta_file, in_request );
-                }
+            if( options.inject_extras == true ){
+                queue_html_inject_extras_dir(  sub_tasks, current_target, options.out_path );
             }
 
-            // helps to prevent odd error such :
-            // Warning: Maximum call stack size exceeded Use --force to continue.
-            sub_tasks.push( "throttle:20" );
-
-            if( htmlcompressor == true ){
-                queue_html_min_dir(  sub_tasks, current_target, meta_dir, out_path );
+            if( options.build_assets ){
+                queue_gm_merge(sub_tasks, current_target, options.paths, options.out_path);
             }
+            queue_img_opt_dir(sub_tasks, current_target, options.paths, options.out_path);
 
-            if( inject_extras == true ){
-                queue_html_inject_extras_dir(  sub_tasks, current_target, out_path );
-            }
-
-            if( build_assets ){
-                queue_gm_merge(sub_tasks, current_target, paths, out_path);
-            }
-            queue_img_opt_dir(sub_tasks, current_target, paths, out_path);
-
-            if( build_assets ){
-                queue_css_img_merge_dir(sub_tasks, current_target, meta_dir, out_path, out_path);
+            if( options.build_assets ){
+                queue_css_img_merge_dir(sub_tasks, current_target, options.meta_dir, options.out_path, options.out_path);
             }
             // -
             grunt.task.run( sub_tasks );
@@ -281,28 +258,6 @@ module.exports = function(grunt) {
             grunt.config.set(task_name, opts);
             sub_tasks.push( task_name+":"+sub_task_name );
         }
-
-        function queue_html_manifest( sub_tasks, current_target, in_file, out_file, meta_file, in_request ){
-
-            var task_name = "phantomizer-manifest-html";
-
-            var opts = grunt.config(task_name) || {};
-            var sub_task_name = current_target+"-"+in_request;
-
-            opts = clone_subtasks_options(opts, sub_task_name, current_target);
-            opts[sub_task_name].options.in_file = in_file;
-            opts[sub_task_name].options.out_file = out_file;
-            opts[sub_task_name].options.meta_file = meta_file;
-            opts[sub_task_name].options.base_url = path.dirname(in_request);
-            opts[sub_task_name].options.manifest_file = out_file.replace(/[.](html|htm)$/,".appcache");
-            opts[sub_task_name].options.manifest_meta = meta_file.replace(/[.](html|htm)$/,".appcache");
-            opts[sub_task_name].options.manifest_url = in_request.replace(/[.](html|htm)$/,".appcache");
-
-
-            grunt.config.set(task_name, opts);
-            sub_tasks.push( task_name+":"+sub_task_name );
-        }
-
     });
 
 
@@ -349,19 +304,6 @@ module.exports = function(grunt) {
 
         opts = clone_subtasks_options(opts, sub_task_name, current_target);
         opts[sub_task_name].options.in_dir = in_dir+"/";
-
-        grunt.config.set(task_name, opts);
-        sub_tasks.push( task_name+":"+sub_task_name );
-    }
-    function queue_html_min_dir( sub_tasks, current_target, meta_dir, in_dir ){
-
-        var task_name = "phantomizer-dir-htmlcompressor";
-        var opts = grunt.config(task_name) || {};
-        var sub_task_name = current_target+"-"+sub_tasks.length;
-
-        opts = clone_subtasks_options(opts, sub_task_name, current_target);
-        opts[sub_task_name].options.in_dir = in_dir+"/";
-        opts[sub_task_name].options.meta_dir = meta_dir;
 
         grunt.config.set(task_name, opts);
         sub_tasks.push( task_name+":"+sub_task_name );
