@@ -195,7 +195,7 @@ module.exports = function(grunt) {
           }
           return true;
         });
-        grunt.log.ok("URL to export: "+raw_urls.length+"/"+raw_urls.length+not_added.length);
+        grunt.log.ok("URL to export: "+raw_urls.length+"/"+(raw_urls.length+not_added.length));
 
         var in_request;
         var in_request_tgt;
