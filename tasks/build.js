@@ -187,8 +187,15 @@ module.exports = function(grunt) {
       router.load(function(){
 
         // fetch urls to build
-        var raw_urls = router.collect_urls();
-        grunt.log.ok("URL Count "+raw_urls.length);
+        var not_added = [];
+        var raw_urls = router.collect_urls(function(route){
+          if( route.export == false ){
+            not_added.push(route);
+            return false;
+          }
+          return true;
+        });
+        grunt.log.ok("URL to export: "+raw_urls.length+"/"+raw_urls.length+not_added.length);
 
         var in_request;
         var in_request_tgt;
