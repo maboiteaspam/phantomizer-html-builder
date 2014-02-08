@@ -211,7 +211,13 @@ module.exports = function(grunt) {
           meta_file = path.normalize(meta_file);
 
           if( meta_manager.is_fresh(meta_file) == false ){
-            urls.push({in_request:in_request,out_file:out_file,meta_file:meta_file})
+            urls.push({
+              raw_in_request:raw_urls[n], /* is exported for html-project-assets builder */
+              in_file:out_file, /* is exported for html-project-assets builder */
+              in_request:in_request,
+              out_file:out_file,
+              meta_file:meta_file
+            });
           }
         }
 
@@ -222,13 +228,7 @@ module.exports = function(grunt) {
         queue_strykejs_builder( sub_tasks, current_target, urls_file, options.inject_extras );
 
         if( options.build_assets ){
-          for( var n in urls ){
-            in_request = urls[n].in_request;
-
-            in_request_tgt = in_request+"-"+current_target;
-            out_file = urls[n].out_file;
-            queue_html_assets( sub_tasks, current_target, in_request, out_file, in_request_tgt, out_file, options.out_path, options.meta_dir, false,false );
-          }
+          queue_html_project_assets( sub_tasks, current_target, urls_file, options.out_path, options.meta_dir );
         }
         // helps to prevent odd error such :
         // Warning: Maximum call stack size exceeded Use --force to continue.
@@ -265,6 +265,22 @@ module.exports = function(grunt) {
         grunt.config.set(task_name, opts);
         sub_tasks.push( task_name+":"+sub_task_name );
       }
+
+      function queue_html_project_assets( sub_tasks, current_target, urls_file, out_path, meta_dir ){
+
+        var task_name = "phantomizer-html-project-assets";
+        var opts = grunt.config(task_name) || {};
+        var sub_task_name = task_name+"-"+current_target;
+
+        opts = clone_subtasks_options(opts, sub_task_name, current_target);
+        opts[sub_task_name].options.urls_file = urls_file;
+        opts[sub_task_name].options.as_of_target = current_target;
+        opts[sub_task_name].options.out_path = out_path;
+        opts[sub_task_name].options.meta_dir = meta_dir;
+
+        grunt.config.set(task_name, opts)
+        sub_tasks.push( task_name+":"+sub_task_name )
+      }
     });
 
 
@@ -282,8 +298,8 @@ module.exports = function(grunt) {
     opts[sub_task_name].options.out_path = out_path;
     opts[sub_task_name].options.meta_dir = meta_dir;
     opts[sub_task_name].options.in_request = in_request;
-    opts[sub_task_name].options.imgcompressor = imgcompressor;
-    opts[sub_task_name].options.image_merge = image_merge;
+    opts[sub_task_name].options.imgcompressor = false;
+    opts[sub_task_name].options.image_merge = false;
 
     grunt.config.set(task_name, opts)
     sub_tasks.push( task_name+":"+sub_task_name )
