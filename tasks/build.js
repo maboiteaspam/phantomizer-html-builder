@@ -69,7 +69,7 @@ module.exports = function(grunt) {
 
       // -
       if( build_assets ){
-        queue_html_assets( sub_tasks, current_target, in_request, out_file+".stryke", in_request_tgt+".assets", out_file+".assets", out_path, meta_dir,true,true );
+        queue_html_assets( sub_tasks, current_target, in_request, out_file+".stryke", in_request_tgt+".assets", out_file+".assets", out_path, meta_dir );
         grunt.log.ok("assets build task pushed ");
       }
 
@@ -284,7 +284,7 @@ module.exports = function(grunt) {
     });
 
 
-  function queue_html_assets( sub_tasks, current_target, in_request, in_file, meta_file, out_file, out_path, meta_dir, imgcompressor, image_merge ){
+  function queue_html_assets( sub_tasks, current_target, in_request, in_file, meta_file, out_file, out_path, meta_dir ){
 
     var task_name = "phantomizer-html-assets";
     var opts = grunt.config(task_name) || {};
@@ -298,8 +298,6 @@ module.exports = function(grunt) {
     opts[sub_task_name].options.out_path = out_path;
     opts[sub_task_name].options.meta_dir = meta_dir;
     opts[sub_task_name].options.in_request = in_request;
-    opts[sub_task_name].options.imgcompressor = false;
-    opts[sub_task_name].options.image_merge = false;
 
     grunt.config.set(task_name, opts)
     sub_tasks.push( task_name+":"+sub_task_name )
