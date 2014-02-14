@@ -4,6 +4,8 @@ module.exports = function(grunt) {
   var _ = grunt.util._;
   var path = require('path');
 
+  var ph_libutil = require("phantomizer-libutil");
+
   grunt.registerTask("phantomizer-html-jitbuild", "Builds html inlined request", function ( target, request ) {
 
     var build_assets = true;
@@ -30,8 +32,6 @@ module.exports = function(grunt) {
 
     var _ = grunt.util._;
     var path = require('path');
-
-    var ph_libutil = require("phantomizer-libutil");
 
     var options = this.options({
       out_path:'',
@@ -148,8 +148,6 @@ module.exports = function(grunt) {
 
       // this task is async
       var done = this.async();
-
-      var ph_libutil = require("phantomizer-libutil");
 
       var sub_tasks = [];
 
