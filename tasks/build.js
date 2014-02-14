@@ -32,13 +32,9 @@ module.exports = function(grunt) {
     var path = require('path');
 
     var ph_libutil = require("phantomizer-libutil");
-    var meta_factory = ph_libutil.meta;
-
-    var wd = process.cwd();
 
     var options = this.options({
       out_path:'',
-      meta_dir:'',
       htmlcompressor:false,
       build_assets:false,
       in_request:''
@@ -46,22 +42,24 @@ module.exports = function(grunt) {
 
     grunt.verbose.writeflags(options,"options");
     var out_path = options.out_path;
-    var meta_dir = options.meta_dir;
 
     var build_assets = options.build_assets;
     var htmlcompressor = options.htmlcompressor;
     var in_request = options.in_request;
 
-    var meta_manager = new meta_factory( wd, meta_dir )
     var current_target = this.target;
 
     var in_request_tgt = in_request+"-"+current_target;
-    var meta_file = meta_dir+"/"+in_request_tgt;
     var out_file = out_path+"/"+in_request_tgt;
 
     var sub_tasks = [];
 
-    if( meta_manager.is_fresh(meta_file) == false ){
+
+// get phantomizer main instance
+    var phantomizer = ph_libutil.get("main");
+    var meta_manager = phantomizer.get_meta_manager();
+
+    if( meta_manager.is_fresh(in_request_tgt) == false ){
 
       // -
       queue_strykejs_builder( sub_tasks, current_target, in_request, in_request_tgt+".stryke", out_file+".stryke" );
@@ -69,22 +67,22 @@ module.exports = function(grunt) {
 
       // -
       if( build_assets ){
-        queue_html_assets( sub_tasks, current_target, in_request, out_file+".stryke", in_request_tgt+".assets", out_file+".assets", out_path, meta_dir );
+        queue_html_assets( sub_tasks, current_target, in_request, out_file+".stryke", in_request_tgt+".assets", out_file+".assets", out_path );
         grunt.log.ok("assets build task pushed ");
       }
 
       // -
       if( htmlcompressor == true ){
         if( build_assets ){
-          queue_html_min(  sub_tasks, current_target, out_file+".min", meta_dir, in_request_tgt+".min", out_file+".assets", in_request );
+          queue_html_min(  sub_tasks, current_target, out_file+".min", in_request_tgt+".min", out_file+".assets", in_request );
         }else{
-          queue_html_min(  sub_tasks, current_target, out_file+".min", meta_dir, in_request_tgt+".min", out_file+".stryke", in_request );
+          queue_html_min(  sub_tasks, current_target, out_file+".min", in_request_tgt+".min", out_file+".stryke", in_request );
         }
         grunt.log.ok("HTMLcompressor task pushed ");
       }
 
       // -
-      queue_finalizer_builder( sub_tasks, in_request_tgt, out_file, build_assets, htmlcompressor, meta_dir );
+      queue_finalizer_builder( sub_tasks, in_request_tgt, out_file, build_assets, htmlcompressor );
       grunt.log.ok("Finalizer task pushed ");
 
       // -
@@ -111,7 +109,7 @@ module.exports = function(grunt) {
       sub_tasks.push( current_sub_task_name+":"+sub_task_name+":"+current_target );
     }
 
-    function queue_finalizer_builder( sub_tasks, in_request, out_file, build_assets, htmlcompressor, meta_dir ){
+    function queue_finalizer_builder( sub_tasks, in_request, out_file, build_assets, htmlcompressor ){
 
       var task_name = "phantomizer-finalizer";
       var opts = grunt.config(task_name) || {};
@@ -121,7 +119,6 @@ module.exports = function(grunt) {
         opts[sub_task_name] = {
           options:{
             copy:{}
-            ,meta_dir:meta_dir
             ,meta_merge:{}
           }
         };
@@ -153,7 +150,6 @@ module.exports = function(grunt) {
       var done = this.async();
 
       var ph_libutil = require("phantomizer-libutil");
-      var meta_factory = ph_libutil.meta;
 
       var sub_tasks = [];
 
@@ -162,7 +158,6 @@ module.exports = function(grunt) {
         // the path were all build assets results
         out_path:'',
         // the path holding all build assets meta
-        meta_dir:'',
         // the path to record temporarly url collection
         run_dir:'',
         // the path used for webserver
@@ -176,13 +171,12 @@ module.exports = function(grunt) {
 
       var current_target = this.target;
 
-      var meta_manager = new meta_factory( process.cwd(), options.meta_dir );
+      var phantomizer = ph_libutil.get("main");
+      var meta_manager = phantomizer.get_meta_manager();
 
       // initialize the router given the grunt config.routing key
       // router provides the catalog of urls to build
-      var config = grunt.config.get();
-      var router_factory = ph_libutil.router;
-      var router = new router_factory(config.routing);
+      var router = phantomizer.get_router();
       // load urls eventually from a remote service
       router.load(function(){
 
@@ -228,7 +222,7 @@ module.exports = function(grunt) {
         queue_strykejs_builder( sub_tasks, current_target, urls_file, options.inject_extras );
 
         if( options.build_assets ){
-          queue_html_project_assets( sub_tasks, current_target, urls_file, options.out_path, options.meta_dir );
+          queue_html_project_assets( sub_tasks, current_target, urls_file, options.out_path );
         }
         // helps to prevent odd error such :
         // Warning: Maximum call stack size exceeded Use --force to continue.
@@ -244,7 +238,7 @@ module.exports = function(grunt) {
         queue_img_opt_dir(sub_tasks, current_target, options.paths, options.out_path);
 
         if( options.build_assets ){
-          queue_css_img_merge_dir(sub_tasks, current_target, options.meta_dir, options.out_path, options.out_path);
+          queue_css_img_merge_dir(sub_tasks, current_target, options.out_path, options.out_path);
         }
         // -
         grunt.task.run( sub_tasks );
@@ -266,7 +260,7 @@ module.exports = function(grunt) {
         sub_tasks.push( task_name+":"+sub_task_name );
       }
 
-      function queue_html_project_assets( sub_tasks, current_target, urls_file, out_path, meta_dir ){
+      function queue_html_project_assets( sub_tasks, current_target, urls_file, out_path ){
 
         var task_name = "phantomizer-html-project-assets";
         var opts = grunt.config(task_name) || {};
@@ -276,7 +270,6 @@ module.exports = function(grunt) {
         opts[sub_task_name].options.urls_file = urls_file;
         opts[sub_task_name].options.as_of_target = current_target;
         opts[sub_task_name].options.out_path = out_path;
-        opts[sub_task_name].options.meta_dir = meta_dir;
 
         grunt.config.set(task_name, opts)
         sub_tasks.push( task_name+":"+sub_task_name )
@@ -284,7 +277,7 @@ module.exports = function(grunt) {
     });
 
 
-  function queue_html_assets( sub_tasks, current_target, in_request, in_file, meta_file, out_file, out_path, meta_dir ){
+  function queue_html_assets( sub_tasks, current_target, in_request, in_file, meta_file, out_file, out_path ){
 
     var task_name = "phantomizer-html-assets";
     var opts = grunt.config(task_name) || {};
@@ -296,13 +289,12 @@ module.exports = function(grunt) {
     opts[sub_task_name].options.out = out_file;
     opts[sub_task_name].options.meta_file = meta_file;
     opts[sub_task_name].options.out_path = out_path;
-    opts[sub_task_name].options.meta_dir = meta_dir;
     opts[sub_task_name].options.in_request = in_request;
 
     grunt.config.set(task_name, opts)
     sub_tasks.push( task_name+":"+sub_task_name )
   }
-  function queue_html_min( sub_tasks, current_target, out_file, meta_dir, meta_file, in_file, in_request ){
+  function queue_html_min( sub_tasks, current_target, out_file, meta_file, in_file, in_request ){
 
     var task_name = "phantomizer-htmlcompressor";
     var opts = grunt.config(task_name) || {};
@@ -312,7 +304,6 @@ module.exports = function(grunt) {
     opts[sub_task_name].options.in_file = in_file;
     opts[sub_task_name].options.out = out_file;
     opts[sub_task_name].options.meta_file = meta_file;
-    opts[sub_task_name].options.meta_dir = meta_dir;
 
     grunt.config.set(task_name, opts);
     sub_tasks.push( task_name+":"+sub_task_name );
@@ -345,7 +336,7 @@ module.exports = function(grunt) {
 
     grunt.config.set(task_name, task_options);
   }
-  function queue_css_img_merge_dir( sub_tasks, build_target, meta_dir, in_dir, out_dir ){
+  function queue_css_img_merge_dir( sub_tasks, build_target, in_dir, out_dir ){
 
     var merge_options = grunt.config("phantomizer-gm-merge") || {};
     var map = merge_options.options.in_files;
@@ -357,7 +348,6 @@ module.exports = function(grunt) {
     task_options = clone_subtasks_options(task_options, jit_target, build_target);
     task_options[jit_target].options.paths = in_dir;
     task_options[jit_target].options.out_dir = out_dir;
-    task_options[jit_target].options.meta_dir = meta_dir;
     task_options[jit_target].options.map = map;
 
     sub_tasks.push( task_name+":"+jit_target );
