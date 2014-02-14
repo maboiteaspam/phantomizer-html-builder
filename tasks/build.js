@@ -56,7 +56,8 @@ module.exports = function(grunt) {
 
 
 // get phantomizer main instance
-    var phantomizer = ph_libutil.get("main");
+    var Phantomizer = ph_libutil.Phantomizer;
+    var phantomizer = new Phantomizer(process.cwd(),grunt);
     var meta_manager = phantomizer.get_meta_manager();
 
     if( meta_manager.is_fresh(in_request_tgt) == false ){
@@ -169,7 +170,8 @@ module.exports = function(grunt) {
 
       var current_target = this.target;
 
-      var phantomizer = ph_libutil.get("main");
+      var Phantomizer = ph_libutil.Phantomizer;
+      var phantomizer = new Phantomizer(process.cwd(),grunt);
       var meta_manager = phantomizer.get_meta_manager();
 
       // initialize the router given the grunt config.routing key
