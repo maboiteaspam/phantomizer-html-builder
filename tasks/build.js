@@ -6,28 +6,6 @@ module.exports = function(grunt) {
 
   var ph_libutil = require("phantomizer-libutil");
 
-  grunt.registerTask("phantomizer-html-jitbuild", "Builds html inlined request", function ( target, request ) {
-
-    var build_assets = true;
-
-    var task_options = grunt.config("phantomizer-html-jitbuild");
-
-    var options = {}
-    grunt.util._.merge(options, task_options);
-
-    if( !options[target] )
-      options[target] = {
-        options:{}
-      }
-
-    options[target]["options"]["request"] = request;
-    options[target]["options"]["build_assets"] = build_assets;
-
-    grunt.config.set("phantomizer-html-builder", options);
-    grunt.task.run("phantomizer-html-builder:" + target);
-
-  });
-
   grunt.registerMultiTask("phantomizer-html-builder", "Builds html request", function () {
 
     var _ = grunt.util._;
@@ -139,7 +117,6 @@ module.exports = function(grunt) {
       sub_tasks.push( task_name+":"+sub_task_name );
     }
   });
-
 
 
   // Builds a phantomizer project
