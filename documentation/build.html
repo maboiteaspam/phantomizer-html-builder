@@ -29,34 +29,12 @@ module.exports = <span class="hljs-function"><span class="hljs-keyword">function
   <span class="hljs-keyword">var</span> _ = grunt.util._;
   <span class="hljs-keyword">var</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>);
 
-  grunt.registerTask(<span class="hljs-string">"phantomizer-html-jitbuild"</span>, <span class="hljs-string">"Builds html inlined request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">( target, request )</span> {</span>
-
-    <span class="hljs-keyword">var</span> build_assets = <span class="hljs-literal">true</span>;
-
-    <span class="hljs-keyword">var</span> task_options = grunt.config(<span class="hljs-string">"phantomizer-html-jitbuild"</span>);
-
-    <span class="hljs-keyword">var</span> options = {}
-    grunt.util._.merge(options, task_options);
-
-    <span class="hljs-keyword">if</span>( !options[target] )
-      options[target] = {
-        options:{}
-      }
-
-    options[target][<span class="hljs-string">"options"</span>][<span class="hljs-string">"request"</span>] = request;
-    options[target][<span class="hljs-string">"options"</span>][<span class="hljs-string">"build_assets"</span>] = build_assets;
-
-    grunt.config.set(<span class="hljs-string">"phantomizer-html-builder"</span>, options);
-    grunt.task.run(<span class="hljs-string">"phantomizer-html-builder:"</span> + target);
-
-  });
+  <span class="hljs-keyword">var</span> ph_libutil = <span class="hljs-built_in">require</span>(<span class="hljs-string">"phantomizer-libutil"</span>);
 
   grunt.registerMultiTask(<span class="hljs-string">"phantomizer-html-builder"</span>, <span class="hljs-string">"Builds html request"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
 
     <span class="hljs-keyword">var</span> _ = grunt.util._;
     <span class="hljs-keyword">var</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>);
-
-    <span class="hljs-keyword">var</span> ph_libutil = <span class="hljs-built_in">require</span>(<span class="hljs-string">"phantomizer-libutil"</span>);
 
     <span class="hljs-keyword">var</span> options = <span class="hljs-keyword">this</span>.options({
       out_path:<span class="hljs-string">''</span>,
@@ -84,7 +62,8 @@ module.exports = <span class="hljs-function"><span class="hljs-keyword">function
         <p>get phantomizer main instance</p>
 
         
-          <div class='highlight'><pre>    <span class="hljs-keyword">var</span> phantomizer = ph_libutil.get(<span class="hljs-string">"main"</span>);
+          <div class='highlight'><pre>    <span class="hljs-keyword">var</span> Phantomizer = ph_libutil.Phantomizer;
+    <span class="hljs-keyword">var</span> phantomizer = <span class="hljs-keyword">new</span> Phantomizer(process.cwd(),grunt);
     <span class="hljs-keyword">var</span> meta_manager = phantomizer.get_meta_manager();
 
     <span class="hljs-keyword">if</span>( meta_manager.is_fresh(in_request_tgt) == <span class="hljs-literal">false</span> ){</pre></div>
@@ -210,8 +189,6 @@ module.exports = <span class="hljs-function"><span class="hljs-keyword">function
         
           <div class='highlight'><pre>      <span class="hljs-keyword">var</span> done = <span class="hljs-keyword">this</span>.async();
 
-      <span class="hljs-keyword">var</span> ph_libutil = <span class="hljs-built_in">require</span>(<span class="hljs-string">"phantomizer-libutil"</span>);
-
       <span class="hljs-keyword">var</span> sub_tasks = [];</pre></div>
         
       
@@ -261,7 +238,8 @@ the path to record temporarly url collection</p>
 
       <span class="hljs-keyword">var</span> current_target = <span class="hljs-keyword">this</span>.target;
 
-      <span class="hljs-keyword">var</span> phantomizer = ph_libutil.get(<span class="hljs-string">"main"</span>);
+      <span class="hljs-keyword">var</span> Phantomizer = ph_libutil.Phantomizer;
+      <span class="hljs-keyword">var</span> phantomizer = <span class="hljs-keyword">new</span> Phantomizer(process.cwd(),grunt);
       <span class="hljs-keyword">var</span> meta_manager = phantomizer.get_meta_manager();</pre></div>
         
       
