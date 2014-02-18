@@ -222,13 +222,6 @@ the path to record temporarly url collection</p>
         
       
         
-        <p>enable extras support scripts injection (dashbaord loader, test loader)</p>
-
-        
-          <div class='highlight'><pre>        inject_extras:<span class="hljs-literal">false</span>,</pre></div>
-        
-      
-        
         <p>enable js,css,img build</p>
 
         
@@ -300,7 +293,7 @@ router provides the catalog of urls to build</p>
         grunt.file.mkdir( path.dirname(urls_file) );
         grunt.file.write(urls_file, <span class="hljs-built_in">JSON</span>.stringify(urls));
 
-        queue_strykejs_builder( sub_tasks, current_target, urls_file, options.inject_extras );
+        queue_strykejs_builder( sub_tasks, current_target, urls_file );
 
         <span class="hljs-keyword">if</span>( options.build_assets ){
           queue_html_project_assets( sub_tasks, current_target, urls_file, options.out_path );
@@ -313,10 +306,6 @@ Warning: Maximum call stack size exceeded Use —force to continue.</p>
 
         
           <div class='highlight'><pre>        sub_tasks.push( <span class="hljs-string">"throttle:20"</span> );
-
-        <span class="hljs-keyword">if</span>( options.inject_extras == <span class="hljs-literal">true</span> ){
-          queue_html_inject_extras_dir(  sub_tasks, current_target, options.out_path );
-        }
 
         <span class="hljs-keyword">if</span>( options.build_assets ){
           queue_gm_merge(sub_tasks, current_target, options.paths, options.out_path);
@@ -338,14 +327,13 @@ Warning: Maximum call stack size exceeded Use —force to continue.</p>
         done();
       });
 
-      <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_strykejs_builder</span><span class="hljs-params">( sub_tasks, sub_task_name, urls_file, inject_extras )</span>{</span>
+      <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_strykejs_builder</span><span class="hljs-params">( sub_tasks, sub_task_name, urls_file )</span>{</span>
 
         <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-strykejs-project-builder"</span>;
         <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
 
         opts = clone_subtasks_options(opts, sub_task_name, current_target);
         opts[sub_task_name].options.urls_file = urls_file;
-        opts[sub_task_name].options.inject_extras = inject_extras;
 
         grunt.config.set(task_name, opts);
         sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
@@ -395,18 +383,6 @@ Warning: Maximum call stack size exceeded Use —force to continue.</p>
     opts[sub_task_name].options.in_file = in_file;
     opts[sub_task_name].options.out = out_file;
     opts[sub_task_name].options.meta_file = meta_file;
-
-    grunt.config.set(task_name, opts);
-    sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
-  }
-  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queue_html_inject_extras_dir</span><span class="hljs-params">( sub_tasks, current_target, in_dir )</span>{</span>
-
-    <span class="hljs-keyword">var</span> task_name = <span class="hljs-string">"phantomizer-dir-inject-html-extras"</span>;
-    <span class="hljs-keyword">var</span> opts = grunt.config(task_name) || {};
-    <span class="hljs-keyword">var</span> sub_task_name = current_target+<span class="hljs-string">"-"</span>+sub_tasks.length;
-
-    opts = clone_subtasks_options(opts, sub_task_name, current_target);
-    opts[sub_task_name].options.in_dir = in_dir+<span class="hljs-string">"/"</span>;
 
     grunt.config.set(task_name, opts);
     sub_tasks.push( task_name+<span class="hljs-string">":"</span>+sub_task_name );
