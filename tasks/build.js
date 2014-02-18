@@ -138,8 +138,6 @@ module.exports = function(grunt) {
         run_dir:'',
         // the path used for webserver
         paths:[],
-        // enable extras support scripts injection (dashbaord loader, test loader)
-        inject_extras:false,
         // enable js,css,img build
         build_assets:false
       });
@@ -196,7 +194,7 @@ module.exports = function(grunt) {
         grunt.file.mkdir( path.dirname(urls_file) );
         grunt.file.write(urls_file, JSON.stringify(urls));
 
-        queue_strykejs_builder( sub_tasks, current_target, urls_file, options.inject_extras );
+        queue_strykejs_builder( sub_tasks, current_target, urls_file );
 
         if( options.build_assets ){
           queue_html_project_assets( sub_tasks, current_target, urls_file, options.out_path );
@@ -204,10 +202,6 @@ module.exports = function(grunt) {
         // helps to prevent odd error such :
         // Warning: Maximum call stack size exceeded Use --force to continue.
         sub_tasks.push( "throttle:20" );
-
-        if( options.inject_extras == true ){
-          queue_html_inject_extras_dir(  sub_tasks, current_target, options.out_path );
-        }
 
         if( options.build_assets ){
           queue_gm_merge(sub_tasks, current_target, options.paths, options.out_path);
@@ -224,14 +218,13 @@ module.exports = function(grunt) {
         done();
       });
 
-      function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file, inject_extras ){
+      function queue_strykejs_builder( sub_tasks, sub_task_name, urls_file ){
 
         var task_name = "phantomizer-strykejs-project-builder";
         var opts = grunt.config(task_name) || {};
 
         opts = clone_subtasks_options(opts, sub_task_name, current_target);
         opts[sub_task_name].options.urls_file = urls_file;
-        opts[sub_task_name].options.inject_extras = inject_extras;
 
         grunt.config.set(task_name, opts);
         sub_tasks.push( task_name+":"+sub_task_name );
@@ -281,18 +274,6 @@ module.exports = function(grunt) {
     opts[sub_task_name].options.in_file = in_file;
     opts[sub_task_name].options.out = out_file;
     opts[sub_task_name].options.meta_file = meta_file;
-
-    grunt.config.set(task_name, opts);
-    sub_tasks.push( task_name+":"+sub_task_name );
-  }
-  function queue_html_inject_extras_dir( sub_tasks, current_target, in_dir ){
-
-    var task_name = "phantomizer-dir-inject-html-extras";
-    var opts = grunt.config(task_name) || {};
-    var sub_task_name = current_target+"-"+sub_tasks.length;
-
-    opts = clone_subtasks_options(opts, sub_task_name, current_target);
-    opts[sub_task_name].options.in_dir = in_dir+"/";
 
     grunt.config.set(task_name, opts);
     sub_tasks.push( task_name+":"+sub_task_name );
